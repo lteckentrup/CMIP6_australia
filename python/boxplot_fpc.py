@@ -128,9 +128,6 @@ def grouped_boxplot(axis_grass, axis_tree, veg_mask, region):
     axis_grass.axhline(median_grass, color='k', lw=1, ls='--', alpha=0.7)
     axis_tree.axhline(median_tree, color='k', lw=1, ls='--', alpha=0.7)
 
-    # axis_grass.axhline(median_tree, color='k', lw=1, ls='--', alpha=0.7)
-    # axis_tree.axhline(median_grass, color='k', lw=1, ls='--', alpha=0.7)
-
     df_can_grass = df_can_grass.assign(Model='CanESM5')
     df_can_tree = df_can_tree.assign(Model='CanESM5')
     df_inm_grass = df_inm_grass.assign(Model='INM-CM4-8')
