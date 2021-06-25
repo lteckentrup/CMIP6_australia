@@ -10,8 +10,8 @@ fig = plt.figure(figsize=(10,19))
 fig.subplots_adjust(hspace=0.12)
 fig.subplots_adjust(wspace=0.15)
 fig.subplots_adjust(right=0.98)
-fig.subplots_adjust(left=0.15)
-fig.subplots_adjust(bottom=0.15)
+fig.subplots_adjust(left=0.12)
+fig.subplots_adjust(bottom=0.1)
 fig.subplots_adjust(top=0.98)
 
 plt.rcParams['text.usetex'] = False
@@ -122,6 +122,15 @@ def grouped_boxplot(axis_grass, axis_tree, veg_mask, region):
         df_nor_tree[m] = pd.Series(Tree)
         df_nor_grass[m] = pd.Series(Grass)
 
+    median_grass = df_can_grass['CRUJRA'].median()
+    median_tree = df_can_tree['CRUJRA'].median()
+
+    axis_grass.axhline(median_grass, color='k', lw=1, ls='--', alpha=0.7)
+    axis_tree.axhline(median_tree, color='k', lw=1, ls='--', alpha=0.7)
+
+    # axis_grass.axhline(median_tree, color='k', lw=1, ls='--', alpha=0.7)
+    # axis_tree.axhline(median_grass, color='k', lw=1, ls='--', alpha=0.7)
+
     df_can_grass = df_can_grass.assign(Model='CanESM5')
     df_can_tree = df_can_tree.assign(Model='CanESM5')
     df_inm_grass = df_inm_grass.assign(Model='INM-CM4-8')
@@ -133,17 +142,17 @@ def grouped_boxplot(axis_grass, axis_tree, veg_mask, region):
 
     df_grass = pd.concat([df_can_grass,df_inm_grass,df_mpi_grass,df_nor_grass])
     df_tree = pd.concat([df_can_tree,df_inm_tree,df_mpi_tree,df_nor_tree])
-    
-    df_grass_long = pd.melt(df_grass, 'Model', var_name='Method', 
+
+    df_grass_long = pd.melt(df_grass, 'Model', var_name='Method',
                             value_name='FPC')
-    df_tree_long = pd.melt(df_tree, 'Model', var_name='Method', 
+    df_tree_long = pd.melt(df_tree, 'Model', var_name='Method',
                            value_name='FPC')
 
-    axis_grass = sns.boxplot(x='Model', hue='Method', y='FPC', 
-                             data=df_grass_long, showfliers = False, 
+    axis_grass = sns.boxplot(x='Model', hue='Method', y='FPC',
+                             data=df_grass_long, showfliers=False, whis=0,
                              ax=axis_grass)
     axis_tree = sns.boxplot(x='Model', hue='Method', y='FPC', data=df_tree_long,
-                            showfliers = False, ax=axis_tree)
+                            showfliers=False, whis=0, ax=axis_tree)
 
     axis_grass.set_xlabel('')
     axis_tree.set_xlabel('')
@@ -154,12 +163,16 @@ def grouped_boxplot(axis_grass, axis_tree, veg_mask, region):
         axis_grass.set_xticklabels([])
         axis_tree.set_xticklabels([])
     if region == 'Desert':
-        axis_grass.tick_params(labelrotation=90)
-        axis_tree.tick_params(labelrotation=90)
-
+        axis_grass.xtick_params(labelrotation=90)
+        axis_tree.xtick_params(labelrotation=90)
     if region == 'Total':
         axis_grass.set_title('Grass')
         axis_tree.set_title('Tree')
+    if axis_tree == ax14:
+        axis_tree.legend(loc='upper center', bbox_to_anchor=(-0.2,-0.6), ncol=7)
+    if axis_tree != ax14:
+        axis_tree.legend([],[], frameon=False)
+    axis_grass.legend([],[], frameon=False)
 
 grouped_boxplot(ax1, ax2, total_mask, 'Total')
 grouped_boxplot(ax3, ax4, tropics_mask, 'Tropics')
@@ -169,9 +182,5 @@ grouped_boxplot(ax9, ax10, cool_temperate_mask, 'Cool temperate')
 grouped_boxplot(ax11, ax12, mediterranean_mask, 'Mediterranean')
 grouped_boxplot(ax13, ax14, desert_mask, 'Desert')
 
-axes = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8,ax9,ax10,ax11,ax12,ax13]
-for ax in axes:
-    ax.legend([],[], frameon=False)
-ax14.legend()
-plt.show()
-# plt.savefig('NorESM2-MM.png')
+# plt.show()
+plt.savefig('the_ultimate_boxplot.pdf')
