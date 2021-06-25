@@ -154,6 +154,15 @@ def grouped_boxplot(axis_grass, axis_tree, veg_mask, region):
     axis_tree = sns.boxplot(x='Model', hue='Method', y='FPC', data=df_tree_long,
                             showfliers=False, whis=0, ax=axis_tree)
 
+    axis_grass = sns.pointplot(x='Model', hue='Method', y='FPC',
+                               dodge=.8-.8/len(methods), linestyles='',
+                               markers='x', color='black', estimator=np.median,
+                               ci=None, data=df_tree_long, ax=axis_grass)
+    axis_tree = sns.pointplot(x='Model', hue='Method', y='FPC',
+                               dodge=.8-.8/len(methods), linestyles='',
+                               markers='x', color='black', estimator=np.median,
+                               ci=None, data=df_grass_long, ax=axis_tree)
+
     axis_grass.set_xlabel('')
     axis_tree.set_xlabel('')
     axis_grass.set_ylabel(region+'\n \n FPC')
@@ -163,16 +172,17 @@ def grouped_boxplot(axis_grass, axis_tree, veg_mask, region):
         axis_grass.set_xticklabels([])
         axis_tree.set_xticklabels([])
     if region == 'Desert':
-        axis_grass.xtick_params(labelrotation=90)
-        axis_tree.xtick_params(labelrotation=90)
+        axis_grass.tick_params(axis='x', labelrotation=90)
+        axis_tree.tick_params(axis='x', labelrotation=90)
     if region == 'Total':
         axis_grass.set_title('Grass')
         axis_tree.set_title('Tree')
     if axis_tree == ax14:
-        axis_tree.legend(loc='upper center', bbox_to_anchor=(-0.2,-0.6), ncol=7)
+        axis_tree.legend(handles=axis_tree.legend_.legendHandles[:len(methods)],
+                         loc='upper center', bbox_to_anchor=(-0.2,-0.6), ncol=7)
     if axis_tree != ax14:
-        axis_tree.legend([],[], frameon=False)
-    axis_grass.legend([],[], frameon=False)
+        axis_tree.legend_.remove()
+    axis_grass.legend_.remove()
 
 grouped_boxplot(ax1, ax2, total_mask, 'Total')
 grouped_boxplot(ax3, ax4, tropics_mask, 'Tropics')
