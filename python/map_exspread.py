@@ -7,9 +7,17 @@ import matplotlib as mpl
 import xarray as xr
 import numpy as np
 from netCDF4 import Dataset as netcdf_dataset
+from cartopy.io import shapereader
+import geopandas
 
-countries=('oz_contour.nc')
-ds_countries=xr.open_dataset(countries)
+# get country borders
+resolution = '10m'
+category = 'cultural'
+name = 'admin_0_countries'
+
+shpfilename = shapereader.natural_earth(resolution, category, name)
+df = geopandas.read_file(shpfilename)
+poly = df.loc[df['ADMIN'] == 'Australia']['geometry'].values[0]
 
 def outsider(model,file,var):
     if file == 'NEE_cumsum':
@@ -112,6 +120,9 @@ for (i, ax), en in zip(enumerate(axgr), exp_names):
 
     masked = np.ma.masked_where(data_list[i] == 0, data_list[i])
     p = ax.pcolormesh(lon, lat, data_list[i], cmap=cmap, norm=norm)
+    ax.add_geometries(poly, crs=ccrs.PlateCarree(), facecolor='none',
+                      edgecolor='0.0')
+    ax.set_extent([112.25,153.75,-43.75,-10.75], crs=ccrs.PlateCarree())
     print(np.nanmin(data_list[i]))
     print(np.nanmax(data_list[i]))
 
