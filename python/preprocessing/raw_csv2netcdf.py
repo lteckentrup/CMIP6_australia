@@ -234,10 +234,10 @@ def convert_ascii_netcdf_monthly(method, var, model, temp_res, PFT):
 
     else:
         if model == 'CRUJRA':
-            df = pd.read_csv(idir+'/runs_CRUJRA_monthly/'+full_var+'.csv',
+            df = pd.read_csv(idir+'runs_CRUJRA_monthly/'+full_var+'.csv',
                              header=0, delim_whitespace=True)
         else:
-            df = pd.read_csv(idir+'/runs_'+method+'_monthly/'+model+'/'+full_var+'.csv',
+            df = pd.read_csv(idir+'runs_'+method+'_monthly/'+model+'/'+full_var+'.csv',
                              header=0,delim_whitespace=True)
 
     years = np.unique(df.Year)
