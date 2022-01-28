@@ -27,6 +27,7 @@ for va in vars_annual:
         print(mn)
         for m in methods:
             convert_ascii_netcdf_annual(m, va, mn, 'daily')
+            convert_ascii_netcdf_annual(m, va, mn, 'monthly')
 
 for va in vars_monthly:
     print(va)
@@ -37,3 +38,4 @@ for va in vars_monthly:
             print(mn)
             for m in methods:
                 convert_ascii_netcdf_monthly(m, va, mn, 'daily', 'C4G')
+                convert_ascii_netcdf_monthly(m, va, mn, 'monthly', 'C4G')
