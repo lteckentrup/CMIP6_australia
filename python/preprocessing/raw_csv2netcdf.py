@@ -23,6 +23,7 @@ from vars import (
     )
 
 date_created = date.today()
+
 idir='/g/data/w35/lt0205/research/monthly_lpj_guess/'
 
 def convert_ascii_netcdf_annual(method, var, model, temp_res):
