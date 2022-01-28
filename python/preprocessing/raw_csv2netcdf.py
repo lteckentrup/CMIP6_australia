@@ -41,7 +41,7 @@ def convert_ascii_netcdf_annual(method, var, model, temp_res):
                              delim_whitespace=True)
         else:
             df = pd.read_csv(idir+'/runs_'+method+'_monthly/'+model+'/'+var+'.out',
-                             header=0,error_bad_lines=False,delim_whitespace=True)
+                             header=0,delim_whitespace=True)
 
     years = np.unique(df.Year)
     first_year = str(int(years[0]))
@@ -238,7 +238,7 @@ def convert_ascii_netcdf_monthly(method, var, model, temp_res, PFT):
                              header=0, delim_whitespace=True)
         else:
             df = pd.read_csv(idir+'/runs_'+method+'_monthly/'+model+'/'+full_var+'.csv',
-                             header=0,error_bad_lines=False,delim_whitespace=True)
+                             header=0,delim_whitespace=True)
 
     years = np.unique(df.Year)
 
