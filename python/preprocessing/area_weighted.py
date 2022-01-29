@@ -72,11 +72,26 @@ def area_weighted_seasonal_sum(method, model, var, PFT):
     sum = weighted[var+'_'+PFT].sum(dim=['Lat', 'Lon']) / 1e12
     return(sum.values)
 
-df_temp = pd.DataFrame()
-df_temp['Year'] = np.arange(1901,2019,1)
-# df_temp = df_temp.set_index('Year')
+def generate_dataframe(method, fname, var):
+    df = pd.DataFrame()
 
-for mn in model_names:
-    df_temp[mn] = area_weighted_sum('original', mn, 'temp', 'temp')
+    if var == 'mpgpp':
+        df['month'] = np.arange(1,13,1)
+    else:
+        df['Year'] = np.arange(1901,2019,1)
 
-df_temp.to_csv('temp_full_original.csv')
+    for mn in model_names:
+        if var in ('Total', 'NEE'):
+            df[mn] = area_weighted_sum(method, mn, fname, var)
+        elif var in ('temp', 'prec', 'insol'):
+            df[mn] = area_weighted_avg(method, mn, fname, var)
+        elif var == 'mpgpp':
+            df[mn] = area_weighted_seasonal_sum(method, model, var, PFT)
+
+    if var == 'mpgpp':
+        return(df.set_index('month'))
+    else:
+        return(df.set_index('Year'))
+
+df_temp = generate_dataframe('original', 'temp', 'temp')
+df_temp.to_csv(path+'original_csv/temp_full.csv')
