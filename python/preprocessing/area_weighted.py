@@ -74,7 +74,9 @@ def area_weighted_seasonal_sum(method, model, var, PFT):
 
 df_temp = pd.DataFrame()
 df_temp['Year'] = np.arange(1901,2019,1)
-df_temp = df_temp.set_index('Year')
+# df_temp = df_temp.set_index('Year')
 
 for mn in model_names:
     df_temp[mn] = area_weighted_sum('original', mn, 'temp', 'temp')
+
+df_temp.to_csv('temp_full_original.csv')
