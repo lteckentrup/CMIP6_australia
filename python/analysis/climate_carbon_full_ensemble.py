@@ -1,14 +1,10 @@
 import numpy as np
-import netCDF4 as nc
 import matplotlib.pyplot as plt
 import pandas as pd
-from pylab import text
-import glob
-from matplotlib.pyplot import cm
-import matplotlib.ticker as ticker
 import xarray as xr
 from matplotlib.gridspec import GridSpec
-from read_in import model_names
+from read_in import (model_names,
+                     cmap)
 
 fig = plt.figure(figsize=(9,9))
 
@@ -56,19 +52,13 @@ def rolling_avg(df):
     rolling = df_anomaly.rolling(window=30,center=True).mean()
     return(rolling)
 
-color_20=cm.tab20(np.arange(0,20,1))
-color_add=cm.tab20b([0])
-black = np.array([0,0,0,1], ndmin=2)
-
-color=np.vstack((color_20,color_add,black))
-
 dataframes = [df_temp,df_prec,df_CTotal]
 axes=[ax2,ax4,ax6]
 
 for df,a in zip(dataframes,axes):
     rolling = rolling_avg(df)
     a.axhline(0, linewidth=1,  color='k', alpha=0.5)
-    for mn, c in zip(model_names, color):
+    for mn, c in zip(model_names, cmap):
         if mn == 'CRUJRA':
             lw=3.0
         else:
@@ -78,8 +68,10 @@ for df,a in zip(dataframes,axes):
 def boxplot_plot(df,ax,stat,position,facecolor):
     if stat=='avg':
         df_boxplot = df[-30:].drop(columns=['CRUJRA']).mean(axis=0)
+        scatter=df['CRUJRA'][-30:].mean()
     elif stat=='std':
         df_boxplot = df[-30:].drop(columns=['CRUJRA']).std(axis=0)
+        scatter=df['CRUJRA'][-30:].std()
 
     boxplot=ax.boxplot(df_boxplot,
                        positions=[position],
@@ -100,11 +92,6 @@ def boxplot_plot(df,ax,stat,position,facecolor):
                                        facecolor=facecolor,
                                        alpha=.7))
 
-    if stat=='avg':
-        scatter=df['CRUJRA'][-30:].mean()
-    elif stat=='std':
-        scatter=df['CRUJRA'][-30:].std()
-
     ax.scatter(position,scatter, marker='*',c='k',s=160,zorder=3,label='CRUJRA')
 
 boxplot_plot(df_temp,ax1,'avg',0.5,'#088da5')
@@ -118,7 +105,7 @@ for a in (ax1,ax2,ax3,ax4):
     ax1.set_xticklabels([])
 
 ax5_twin.set_xticklabels(['Avg', 'IAV'])
-    
+
 for a in (ax1,ax3,ax5):
     a.axvline(1, linewidth=1,  color='k', alpha=0.5)
 
@@ -148,6 +135,7 @@ ax6.set_ylabel('$\Delta \mathrm{C_{Total}}$ [PgC]')
 ax2.legend(loc='upper center', bbox_to_anchor=(1.4, 0.7), ncol=1, frameon=False)
 ax3.legend(loc='upper center', bbox_to_anchor=(4.305, -0.37), ncol=1, frameon=False)
 
+fig.align_ylabels()
 
-plt.show()
-# plt.savefig('climate_carbon_change.pdf')
+# plt.show()
+plt.savefig('climate_carbon_full_ensemble.pdf')
