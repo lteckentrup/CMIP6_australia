@@ -2,28 +2,43 @@ import os
 import xarray as xr
 import pandas as pd
 import numpy as np
+from matplotlib.pyplot import cm
 
-path='../LPJ_monthly_corrected/'
+### Grab model names
 path_full='../LPJ_monthly_corrected/original/'
 path_bounding='../LPJ_monthly_corrected/dOTC/'
 
-### Grab model names
 model_names_unsorted = [name for name in os.listdir(path_full)
                         if os.path.isdir(os.path.join(path_full, name))]
-model_names_unsorted.remove('CRUJRA')
 
 model_names_bounding_unsorted = [name for name in os.listdir(path_bounding)
                                  if os.path.isdir(os.path.join(path_bounding, name))]
 
 model_names = sorted(model_names_unsorted, key=str.lower)
+model_names.remove('CRUJRA')
+model_names.append('CRUJRA')
+
 model_names_bounding = sorted(model_names_bounding_unsorted, key=str.lower)
 
+### Generate colormap
+color_20=cm.tab20(np.arange(0,20,1))
+color_add=cm.tab20b([0])
+black = np.array([0,0,0,1], ndmin=2)
+cmap=np.vstack((color_20,color_add,black))
 
-## Calculate area weighted sum
+### Calculate area weighted averages and sums
+path='../LPJ_monthly_corrected/'
+
+## Area weighted sum
 def area_weighted_sum(method, model, fname, var):
     gridarea = xr.open_dataset(path+'gridarea_mask.nc')
+    if model == 'CRUJRA':
+        suffix='_1901-2018.nc'
+    else:
+        suffix='_1850-2100.nc'
+
     model = xr.open_dataset(path+method+'/'+model+'/'+fname+'_'+
-                            model+'_1850-2100.nc')
+                            model+suffix)
 
     model_sel = model.sel(Time=slice('1901','2018'))
 
@@ -32,11 +47,16 @@ def area_weighted_sum(method, model, fname, var):
     sum = weighted[var].sum(dim=['Lat', 'Lon']) / 1e12
     return(sum.values)
 
-## Calculate area weighted average
+## Area weighted average
 def area_weighted_avg(method, model, fname, var):
     gridarea = xr.open_dataset(path+'gridarea_mask.nc')
+    if model == 'CRUJRA':
+        suffix='_1901-2018.nc'
+    else:
+        suffix='_1850-2100.nc'
+
     model = xr.open_dataset(path+method+'/'+model+'/'+fname+'_'+
-                            model+'_1850-2100.nc')
+                            model+suffix)
 
     if fname in ('temp', 'prec', 'insol'):
         model_sel = model.sel(time=slice('1901','2018'))
@@ -57,11 +77,16 @@ def area_weighted_avg(method, model, fname, var):
     avg = weighted[var].sum(dim=['Lat', 'Lon']) / gridarea.Total.sum(dim=['Lat', 'Lon'])
     return(avg.values)
 
-## Calculate area weighted seasonal sum
+## Area weighted seasonal sum
 def area_weighted_seasonal_sum(method, model, var, PFT):
     gridarea = xr.open_dataset(path+'gridarea_mask.nc')
-    model = xr.open_dataset(path+method+'/'+model+'/'+var+'_'+PFT+'_'+model+
-                            '_1850-2100.nc')
+
+    if model == 'CRUJRA':
+        suffix='_1901-2018.nc'
+    else:
+        suffix='_1850-2100.nc'
+
+    model = xr.open_dataset(path+method+'/'+model+'/'+var+'_'+PFT+'_'+model+suffix)
 
     model_sel = model.sel(Time=slice('1901','2018'))
 
@@ -72,6 +97,7 @@ def area_weighted_seasonal_sum(method, model, var, PFT):
     sum = weighted[var+'_'+PFT].sum(dim=['Lat', 'Lon']) / 1e12
     return(sum.values)
 
+### Generate output files
 def generate_dataframe(method, fname, var):
     df = pd.DataFrame()
 
@@ -95,3 +121,12 @@ def generate_dataframe(method, fname, var):
 
 df_temp = generate_dataframe('original', 'temp', 'temp')
 df_temp.to_csv(path+'original_csv/temp_full.csv')
+
+df_prec = generate_dataframe('original', 'prec', 'prec')
+df_prec.to_csv(path+'original_csv/prec_full.csv')
+
+df_Total = generate_dataframe('original', 'cpool', 'Total')
+df_Total.to_csv(path+'original_csv/CTotal_full.csv')
+
+df_NEE = generate_dataframe('original', 'cflux', 'NEE')
+df_NEE.to_csv(path+'original_csv/NEE_full.csv')
