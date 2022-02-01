@@ -93,12 +93,15 @@ def plot_wurst(method, model, fname, var, position, selection):
 #     # print(np.nanmax(data_list[i]))
 
 model_names=['EC-Earth3-Veg', 'INM-CM4-8', 'KIOST-ESM', 'MPI-ESM1-2-HR',
-             'NorESM2-MM', 'Ensemble mean']
-pos_titles=[0,7,14,21,28,35]
+             'NorESM2-MM']
+pos_titles=[0,7,14,21,28]
 
 for mn, pt in zip(model_names, pos_titles):
     axs[pt].text(105, -25, mn, ha='center', va='center', rotation=90,
                 size=12)
+
+axs[42].text(105, -10, 'Ensemble average', ha='center', va='center', rotation=90,
+            size=12)
 
 pos_ec=[0,1,2,3,4,5,6]
 pos_inm=[7,8,9,10,11,12,13]
@@ -147,5 +150,6 @@ figure_name = 'CTotal_diff_map.png'
 plt.subplots_adjust(top=0.97, left=0.05, right=0.97, bottom=0.1,
                     wspace=0.08, hspace=0.2)
 
+# plt.subplot_tool()
 # plt.show()
 plt.savefig(figure_name, dpi=400)
