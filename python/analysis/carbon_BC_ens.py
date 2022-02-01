@@ -108,7 +108,7 @@ def plot_wurst_ens(method, selection, color, position, marker):
     df_NEE_diff = df_NEE[-30:].std()-df_NEE_CRUJRA
 
     print(df_CTotal_diff)
-    print(df_NEE_diff)
+    print(df_NEE)
 
     rolling = rolling_avg(df_CTotal[selection])
 
@@ -166,8 +166,8 @@ for aa,tnu,tna in zip(axes_all,title_num,title_name):
 for a in (ax1,ax3,ax5):
     a.set_ylabel('$\Delta \mathrm{C_{Total}}$ [PgC]')
 
-ax7.set_ylabel('$\mathrm{\Delta C_{Total,\mu,1989-2018}}$ [PgC]')
-ax8.set_ylabel('$\mathrm{\Delta NBP_{\sigma,1989-2018}}$ [PgC]')
+ax7.set_ylabel('$\mathrm{\Delta C_{\mathrm{Total,\mu,CMIP6-CRUJRA}}}$ [PgC]')
+ax8.set_ylabel('$\mathrm{\Delta NBP_{\mathrm{\sigma,CMIP6-CRUJRA}}}$ [PgC]')
 
 ax4.legend(loc='upper center', bbox_to_anchor=(1.3, 1.1), ncol=1, frameon=False)
 ax6.legend(loc='upper center', bbox_to_anchor=(1.3, 0.8), ncol=1, frameon=False)
@@ -185,7 +185,7 @@ custom_markers = [Line2D([0], [0], marker='o', linestyle='', color='k'),
 
 ax8.legend(custom_markers, ['EC-Earth3-Veg', 'INM-CM4-8', 'KIOST-ESM',
                             'MPI-ESM1-2-HR', 'NorESM2-MM', 'Full', 'Skilled',
-                            'Bounding'],
+                            'Independence', 'Bounding'],
            loc='upper center', bbox_to_anchor=(1.3, 1.1),frameon=False)
 
 bc_methods = ['original', 'SCALING', 'MAV', 'QM', 'CDFt', 'dOTC', 'MRec',
@@ -194,7 +194,7 @@ bc_methods = ['original', 'SCALING', 'MAV', 'QM', 'CDFt', 'dOTC', 'MRec',
 for a in (ax1,ax2,ax3,ax4):
     a.set_xticklabels([])
 for a in (ax7, ax8):
-    a.set_xticks([1,2,3,4,5,6,7,9,10,11])
+    a.set_xticks([1,2.5,3.5,4.5,5.5,6.5,7.5,9,10,11])
     a.set_xticklabels(bc_methods,rotation = 45, ha='right')
 
     a.axvline(x=1.75,color='k', alpha=0.5)
@@ -204,3 +204,4 @@ fig.align_ylabels()
 
 # plt.show()
 plt.savefig('carbon_BC_ens.pdf')
+# plt.savefig('carbon_result_BC_monthly.pdf')
