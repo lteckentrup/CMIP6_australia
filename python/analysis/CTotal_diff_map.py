@@ -147,6 +147,5 @@ figure_name = 'CTotal_diff_map.png'
 plt.subplots_adjust(top=0.97, left=0.05, right=0.97, bottom=0.1,
                     wspace=0.08, hspace=0.2)
 
-# plt.subplot_tool()
 # plt.show()
 plt.savefig(figure_name, dpi=400)
