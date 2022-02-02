@@ -6,7 +6,7 @@ from matplotlib.lines import Line2D
 from read_in import model_names_bounding
 from matplotlib.gridspec import GridSpec
 
-fig=plt.figure(figsize=(10,16))
+fig=plt.figure(figsize=(10,12))
 
 fig.subplots_adjust(hspace=0.8)
 fig.subplots_adjust(wspace=0.28)
@@ -22,16 +22,16 @@ plt.rcParams['legend.fontsize']=12
 plt.rcParams['xtick.labelsize']=11
 plt.rcParams['ytick.labelsize']=11
 
-gs=GridSpec(13,2)
+gs=GridSpec(17,2)
 
-ax1=fig.add_subplot(gs[0:3,:1])
-ax2=fig.add_subplot(gs[0:3,1:])
-ax3=fig.add_subplot(gs[4:7,:1])
-ax4=fig.add_subplot(gs[4:7,1:])
-ax5=fig.add_subplot(gs[7:10,:1])
-ax6=fig.add_subplot(gs[7:10,1:])
-ax7=fig.add_subplot(gs[10:,:1])
-ax8=fig.add_subplot(gs[10:,1:])
+ax1=fig.add_subplot(gs[0:4,:1])
+ax2=fig.add_subplot(gs[0:4,1:])
+ax3=fig.add_subplot(gs[5:9,:1])
+ax4=fig.add_subplot(gs[5:9,1:])
+ax5=fig.add_subplot(gs[9:13,:1])
+ax6=fig.add_subplot(gs[9:13,1:])
+ax7=fig.add_subplot(gs[13:,:1])
+ax8=fig.add_subplot(gs[13:,1:])
 
 axes=[ax3,ax4,ax5,ax6,ax7,ax8]
 
