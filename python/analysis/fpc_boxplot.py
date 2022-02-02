@@ -2,9 +2,9 @@ import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import netCDF4 as nc
 import xarray as xr
 from matplotlib.gridspec import GridSpec
+
 sns.set_theme(style='ticks')
 
 fig = plt.figure(figsize=(11,9))
@@ -34,18 +34,22 @@ ax11=fig.add_subplot(gs[1,16:17])
 ax12=fig.add_subplot(gs[1,17:18])
 
 def readin(model,method,selection):
+    if method in ('Weighted', 'Uniform', 'Random_Forest', 'original', 'QM',
+                  'CDFt', 'MRec'):
+        suffix='_1850-2100.nc'
+    elif method in ('SCALING', 'MVA'):
+        suffix='_1851-2100.nc'
+    else:
+        suffix='_1851-2025.nc'
+
     if method == 'CRUJRA':
         fname = ('../reanalysis/CTRL/CRUJRA/fpc_LPJ-GUESS_1901-2018.nc')
     elif method == 'Weighted':
         fname = ('../LPJ_ensemble_averages/Weighted/fpc_weighted_1850-2100.nc')
     elif method in ('Uniform', 'Random_Forest'):
-        fname = ('../LPJ_ensemble_averages/'+method+'/fpc_'+selection+'_1850-2100.nc')
-    elif method in ('original', 'QM', 'CDFt', 'MRec'):
-        fname = ('../LPJ_monthly_corrected/'+method+'/'+model+'/fpc_'+model+'_1850-2100.nc')
-    elif method in ('SCALING', 'MVA'):
-        fname = ('../LPJ_monthly_corrected/'+method+'/'+model+'/fpc_'+model+'_1851-2100.nc')
-    elif method == 'dOTC':
-        fname = ('../LPJ_monthly_corrected/'+method+'/'+model+'/fpc_'+model+'_1851-2025.nc')
+        fname = ('../LPJ_ensemble_averages/'+method+'/fpc_'+selection+suffix)
+    elif method in ('original', 'SCALING', 'MVA', 'QM', 'CDFt', 'MRec', 'dOTC'):
+        fname = ('../LPJ_monthly_corrected/'+method+'/'+model+'/fpc_'+model+suffix)
 
     ds = xr.open_dataset(fname)
     ds = ds.sel(Time='2018')
