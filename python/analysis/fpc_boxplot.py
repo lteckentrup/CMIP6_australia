@@ -7,7 +7,6 @@ from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 
 sns.set_theme(style='ticks')
-
 fig = plt.figure(figsize=(9,9))
 
 plt.rcParams['text.usetex'] = False
