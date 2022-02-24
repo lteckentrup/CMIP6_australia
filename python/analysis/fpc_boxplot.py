@@ -3,11 +3,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import xarray as xr
-from matplotlib.gridspec import GridSpec
+from matplotlib.patches import Patch
+from matplotlib.lines import Line2D
 
 sns.set_theme(style='ticks')
 
-fig = plt.figure(figsize=(11,9))
+fig = plt.figure(figsize=(9,9))
 
 plt.rcParams['text.usetex'] = False
 plt.rcParams['axes.labelsize'] = 12
@@ -16,22 +17,17 @@ plt.rcParams['legend.fontsize'] = 12
 plt.rcParams['xtick.labelsize'] = 11
 plt.rcParams['ytick.labelsize'] = 11
 
-gs=GridSpec(2,19,hspace=0.2,wspace=0.0,right=0.98,left=0.08,bottom=0.25,top=0.97)
+fig.subplots_adjust(hspace=0.19)
+fig.subplots_adjust(wspace=0.12)
+fig.subplots_adjust(top=0.95)
+fig.subplots_adjust(bottom=0.28)
+fig.subplots_adjust(right=0.97)
+fig.subplots_adjust(left=0.1)
 
-ax1=fig.add_subplot(gs[0,:6])
-ax2=fig.add_subplot(gs[0,6:7])
-ax3=fig.add_subplot(gs[0,7:8])
-ax4=fig.add_subplot(gs[0,10:16])
-ax5=fig.add_subplot(gs[0,16:17])
-ax6=fig.add_subplot(gs[0,17:18])
-
-ax7=fig.add_subplot(gs[1,:6])
-ax8=fig.add_subplot(gs[1,6:7])
-ax9=fig.add_subplot(gs[1,7:8])
-
-ax10=fig.add_subplot(gs[1,10:16])
-ax11=fig.add_subplot(gs[1,16:17])
-ax12=fig.add_subplot(gs[1,17:18])
+ax1 = fig.add_subplot(2,2,1)
+ax2 = fig.add_subplot(2,2,2)
+ax3 = fig.add_subplot(2,2,3)
+ax4 = fig.add_subplot(2,2,4)
 
 def readin(model,method,selection):
     if method in ('Weighted', 'Uniform', 'Random_Forest', 'original', 'QM',
@@ -52,7 +48,7 @@ def readin(model,method,selection):
         fname = ('../LPJ_monthly_corrected/'+method+'/'+model+'/fpc_'+model+suffix)
 
     ds = xr.open_dataset(fname)
-    ds = ds.sel(Time='2018')
+    ds = ds.sel(Time=slice('1901', '2018'))
 
     Temperate = ds['TeNE']+ds['TeBS']+ds['IBS']+ds['TeBE']
     Tropical = ds['TrBE']+ds['TrIBE']+ds['TrBR']
@@ -65,8 +61,6 @@ def readin(model,method,selection):
            C4G.values.flatten())
 
 methods = ['original', 'SCALING', 'MVA', 'QM', 'CDFt', 'dOTC', 'MRec']
-methods_legend = ['original', 'Scaling', 'MAV', 'QM', 'CDF-t', 'dOTC',
-                  'MRec', 'Uniform', 'Weighted', 'Random Forest']
 methods_sel=['full', 'skill', 'independence', 'bounding']
 
 ### Generate dataframes for bias corrected models
@@ -83,10 +77,21 @@ def generate_dataframe(model):
         df_C3G[m] = pd.Series(C3G)
         df_C4G[m] = pd.Series(C4G)
 
-    return(df_temperate.assign(Model=model),
-           df_tropical.assign(Model=model),
-           df_C3G.assign(Model=model),
-           df_C4G.assign(Model=model))
+    if model == 'EC-Earth3-Veg':
+        model_num = 2
+    elif model == 'INM-CM4-8':
+        model_num = 4
+    elif model == 'KIOST-ESM':
+        model_num = 6
+    elif model == 'MPI-ESM1-2-HR':
+        model_num = 8
+    elif model == 'NorESM2-MM':
+        model_num = 10
+
+    return(df_temperate.assign(Model=model_num),
+           df_tropical.assign(Model=model_num),
+           df_C3G.assign(Model=model_num),
+           df_C4G.assign(Model=model_num))
 
 ### Generate grouped dataframes for bias corrected models
 def grouped_dataframes(index):
@@ -106,17 +111,31 @@ def generate_dataframe_ens(method):
     df_C3G = pd.DataFrame()
     df_C4G = pd.DataFrame()
 
-    for m in methods_sel:
-        Temperate, Tropical, C3G, C4G = readin('', method, m)
-        df_temperate[m] = pd.Series(Temperate)
-        df_tropical[m] = pd.Series(Tropical)
-        df_C3G[m] = pd.Series(C3G)
-        df_C4G[m] = pd.Series(C4G)
+    if method == 'Weighted':
+        Temperate, Tropical, C3G, C4G = readin('', 'Weighted', 'full')
+        df_temperate['full'] = pd.Series(Temperate)
+        df_tropical['full'] = pd.Series(Tropical)
+        df_C3G['full'] = pd.Series(C3G)
+        df_C4G['full'] = pd.Series(C4G)
+    else:
+        for m in methods_sel:
+            Temperate, Tropical, C3G, C4G = readin('', method, m)
+            df_temperate[m] = pd.Series(Temperate)
+            df_tropical[m] = pd.Series(Tropical)
+            df_C3G[m] = pd.Series(C3G)
+            df_C4G[m] = pd.Series(C4G)
 
-    return(df_temperate.assign(Model=method),
-           df_tropical.assign(Model=method),
-           df_C3G.assign(Model=method),
-           df_C4G.assign(Model=method))
+    if method == 'Uniform':
+        method_num = 12
+    elif method == 'Weighted':
+        method_num = 13
+    elif method == 'Random_Forest':
+        method_num = 14
+
+    return(df_temperate.assign(Model=method_num),
+           df_tropical.assign(Model=method_num),
+           df_C3G.assign(Model=method_num),
+           df_C4G.assign(Model=method_num))
 
 ### Generate grouped dataframes for ensemble averages
 def grouped_dataframes_ens(index, method):
@@ -130,157 +149,128 @@ def reference_stats(veg_type, ax):
     quant_low = df_CRUJRA[veg_type].replace(0, np.nan).quantile(.25)
     quant_high = df_CRUJRA[veg_type].replace(0, np.nan).quantile(.75)
 
-    if ax==ax10:
-        label_median='Median$\mathrm{_{CRUJRA}}$'
-        label_quant_low='Q1$\mathrm{_{CRUJRA}}$'
-        label_quant_high='Q3$\mathrm{_{CRUJRA}}$'
-    else:
-        label_median='_nolegend_'
-        label_quant_low='_nolegend_'
-        label_quant_high='_nolegend_'
-
-    ax.axhline(quant_low,color='k',lw=2,ls='-.',alpha=0.7,label=label_quant_low)
-    ax.axhline(quant_high,color='k',lw=2,ls=':',alpha=0.7,label=label_quant_high)
-    ax.axhline(median,color='k',lw=2,ls='--',alpha=0.7,label=label_median)
+    ax.axhline(quant_low,color='k',lw=2,ls='-.',alpha=0.7)
+    ax.axhline(quant_high,color='k',lw=2,ls=':',alpha=0.7)
+    ax.axhline(median,color='k',lw=2,ls='--',alpha=0.7)
 
 ### Readin reanalysis
 df_CRUJRA = pd.DataFrame()
-Temperate, Tropical, C3G, C4G = readin('','CRUJRA','')
+Temperate, Tropical, C3G, C4G = readin('', 'CRUJRA', '')
 df_CRUJRA['Temperate'] = Temperate
 df_CRUJRA['Tropical'] = Tropical
 df_CRUJRA['C3G'] = C3G
 df_CRUJRA['C4G'] = C4G
 
-axes_temp=[ax1,ax2,ax3]
-axes_tropical=[ax4,ax5,ax6]
-axes_C3G=[ax7,ax8,ax9]
-axes_C4G=[ax10,ax11,ax12]
-axes=[axes_temp,axes_tropical,axes_C3G,axes_C4G]
+axes=[ax1,ax2,ax3,ax4]
 
 veg_types=['Temperate', 'Tropical', 'C3G', 'C4G']
 
 ### Plot reference stats
-for al,vt in zip(axes,veg_types):
-    for a in al:
+for a,vt in zip(axes,veg_types):
         reference_stats(vt, a)
 
-### Get grouped dataframes for bias corrected models
-df_BC_temperate = grouped_dataframes(0)
-df_BC_tropical = grouped_dataframes(1)
-df_BC_C3G = grouped_dataframes(2)
-df_BC_C4G = grouped_dataframes(3)
+def boxplot(method):
+    ### Get grouped dataframes for bias corrected models
+    if method == 'BC':
+        dataframes = [grouped_dataframes(0),
+                      grouped_dataframes(1),
+                      grouped_dataframes(2),
+                      grouped_dataframes(3)]
+    else:
+        dataframes = [grouped_dataframes_ens(0, method),
+                      grouped_dataframes_ens(1, method),
+                      grouped_dataframes_ens(2, method),
+                      grouped_dataframes_ens(3, method)]
 
-### Get grouped dataframes for ensemble averaging methods
-df_UMMM_temperate = grouped_dataframes_ens(0, 'Uniform')
-df_UMMM_tropical = grouped_dataframes_ens(1, 'Uniform')
-df_UMMM_C3G = grouped_dataframes_ens(2, 'Uniform')
-df_UMMM_C4G = grouped_dataframes_ens(3, 'Uniform')
+    ### Define colors and boxplot width
+    if method == 'BC':
+        colors = ['#a1c9f4', '#ffb482', '#8de5a1', '#ff9f9b', '#d0bbff',
+                  '#debb9b', '#cfcfcf']
+        width=1.7
+    elif method=='Uniform':
+        colors = ['#fffea3', '#fffea3', '#fffea3', '#fffea3']
+        width=1.1
+    elif method == 'Weighted':
+        colors = ['#fab0e4', '#fab0e4', '#fab0e4', '#fab0e4']
+        width=0.3
+    elif method == 'Random_Forest':
+        colors = ['#b9f2f0', '#b9f2f0', '#b9f2f0', '#b9f2f0']
+        width=1.1
 
-df_RF_temperate = grouped_dataframes_ens(0, 'Random_Forest')
-df_RF_tropical = grouped_dataframes_ens(1, 'Random_Forest')
-df_RF_C3G = grouped_dataframes_ens(2, 'Random_Forest')
-df_RF_C4G = grouped_dataframes_ens(3, 'Random_Forest')
+    sns.set_palette(sns.color_palette(colors))
+    for a, df in zip(axes, dataframes):
+        a = sns.boxplot(x='Model', hue='Method', y='FPC',
+                        data=df, showfliers=False, whis=0, width=width,
+                        ax=a, order = np.arange(1,16))
 
-### Plot bias corrected models
-axes_BC = [ax1,ax4,ax7,ax10]
-df_BC = [df_BC_temperate, df_BC_tropical, df_BC_C3G, df_BC_C4G]
+boxplot('BC')
+boxplot('Uniform')
+boxplot('Weighted')
+boxplot('Random_Forest')
 
-colors = ['#a1c9f4', '#ffb482', '#8de5a1', '#ff9f9b', '#d0bbff',
-          '#debb9b', '#cfcfcf', '#fffea3', '#fab0e4', '#b9f2f0']
-sns.set_palette(sns.color_palette(colors))
-
-for ab, df in zip(axes_BC, df_BC):
-    ab = sns.boxplot(x='Model', hue='Method', y='FPC',
-                      data=df, showfliers=False, whis=0,
-                      ax=ab)
-
-### Plot uniform averages
-axes_UMMM = [ax2,ax5,ax8,ax11]
-df_UMMM = [df_UMMM_temperate, df_UMMM_tropical, df_UMMM_C3G, df_UMMM_C4G]
-
-colors = ['#fffea3', '#fffea3', '#fffea3', '#fffea3']
-sns.set_palette(sns.color_palette(colors))
-
-for au, df in zip(axes_UMMM, df_UMMM):
-    au = sns.boxplot(x='Model', hue='Method', y='FPC',
-                      data=df, showfliers=False, whis=0, width=0.6,
-                      ax=au)
-
-    hatches = ['', '', '//',  '//', '..', '..', '\\\\', '\\\\']
-    # Loop over the bars
-    for i,thisbar in enumerate(au.patches):
-        # Set a different hatch for each bar
-        thisbar.set_hatch(hatches[i])
-
-### Plot random forest averages
-
-axes_RF = [ax3,ax6,ax9,ax12]
-df_RF = [df_RF_temperate, df_RF_tropical, df_RF_C3G, df_RF_C4G]
-
-colors = ['#b9f2f0', '#b9f2f0', '#b9f2f0', '#b9f2f0']
-sns.set_palette(sns.color_palette(colors))
-
-for ar, df in zip(axes_RF, df_RF):
-    ar = sns.boxplot(x='Model', hue='Method', y='FPC',
-                      data=df, showfliers=False, whis=0, width=0.6,
-                      ax=ar)
-
-    hatches = ['', '', '//',  '//', '..', '..', '\\\\', '\\\\']
-    # Loop over the bars
-    for i,thisbar in enumerate(ar.patches):
-        # Set a different hatch for each bar
-        thisbar.set_hatch(hatches[i])
-
-for a in (ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8,ax9,ax10,ax11,ax12):
+for a in (ax1,ax2,ax3,ax4):
     a.legend_.remove()
 
-# ax7.legend(handles=ax7.legend_.legendHandles[:len(methods_legend)],
-#            loc='upper center', bbox_to_anchor=(-0.7,-0.45), ncol=5, frameon=False)
-# ax8.legend(handles=ax8.legend_.legendHandles[:len(methods_legend)],
-#            loc='upper center', bbox_to_anchor=(-0.8,-0.46), ncol=2, frameon=False)
+legend_elements = [Patch(facecolor='#a1c9f4', edgecolor='w'),
+                   Patch(facecolor='#ffb482', edgecolor='w'),
+                   Patch(facecolor='#8de5a1', edgecolor='w'),
+                   Patch(facecolor='#ff9f9b', edgecolor='w'),
+                   Patch(facecolor='#d0bbff', edgecolor='w'),
+                   Patch(facecolor='#debb9b', edgecolor='w'),
+                   Patch(facecolor='#cfcfcf', edgecolor='w'),
+                   Patch(facecolor='#fffea3', edgecolor='w'),
+                   Patch(facecolor='#fab0e4', edgecolor='w'),
+                   Patch(facecolor='#b9f2f0', edgecolor='w'),
+                   Line2D([0], [0], color='k', lw=2, ls='-'),
+                   Line2D([0], [0], color='k', lw=2, ls=':'),
+                   Line2D([0], [0], color='k', lw=2, ls='--')]
 
+legend_labels = ['Original', 'Scaling', 'MAV', 'QM', 'CDF-t', 'dOTC', 'MRec',
+                 'Uniform', 'Weighted', 'Random Forest',
+                 'Q1$\mathrm{_{CRUJRA}}$', 'Q3$\mathrm{_{CRUJRA}}$',
+                 'Median$\mathrm{_{CRUJRA}}$']
 
-for a in (ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8,ax9,ax10,ax11,ax12):
+ax4.legend(legend_elements, legend_labels, loc='upper center',
+           bbox_to_anchor=(-0.1, -0.5), ncol=5, frameon=False)
+
+hatches = ['']
+hatches = hatches * 47
+hatches.extend(['//', '..', '\\\\', '', '', '', '', '', '', '',
+                '//', '..', '\\\\'])
+
+def hatching(axis):
+    for i,thisbar in enumerate(axis.patches):
+        # Boxes from left to right
+        thisbar.set_hatch(hatches[i])
+
+for a in (ax1,ax2,ax3,ax4):
     a.spines['top'].set_visible(False)
     a.spines['right'].set_visible(False)
-    a.set_xlabel('')
+    a.axvline(10.13, color='k', lw=2, alpha=0.7)
+    a.set_xticks([1,3,5,7,9,11,12,13])
+    a.set_xticklabels(['EC-Earth3-Veg', 'INM-CM4-8', 'KIOST-ESM',
+                       'MPI-ESM1-2-HR', 'NorESM2-MM',
+                       'Uniform', 'Weighted', 'Random Forest'])
 
-for a in (ax2,ax3,ax5,ax6,ax8,ax9,ax11,ax12):
-    a.spines['left'].set_visible(False)
-    a.set_yticks([])
-
-for a in (ax1,ax2,ax3,ax4,ax5,ax6):
-    a.set_xticklabels([])
-
-for a in (ax2,ax3,ax5,ax6,ax8,ax9,ax11,ax12):
-    a.set_yticklabels([])
-    a.set_ylabel('')
-
-for a in (ax7,ax8,ax9,ax10,ax11,ax12):
     a.tick_params(axis='x', labelrotation=90)
+    a.set_xlabel('')
+    a.set_xlim(0,14)
+    hatching(a)
 
-for a in (ax1,ax2,ax3):
-    a.set_ylim(-0.005,0.3315)
-for a in (ax4,ax5,ax6):
-    a.set_ylim(-0.005,0.58)
-for a in (ax7,ax8,ax9):
-    a.set_ylim(-0.005,0.43)
-for a in (ax10,ax11,ax12):
-    a.set_ylim(0.15,0.83)
+for a in (ax1,ax2):
+    a.set_xticklabels([])
+for a in (ax2,ax4):
+    a.set_ylabel('')
+for a in (ax3,ax4):
+    a.tick_params(axis='x', labelrotation=90)
 
 title_left=['a)', 'b)', 'c)', 'd)']
 title_right=['Temperate trees', 'Tropical trees', 'C3 grasses', 'C4 grasses']
-axes=[ax1,ax4,ax7,ax10]
 
 for a,tl,tr in zip(axes,title_left,title_right):
     a.set_title(tl, loc='left')
-    a.set_title(tr,loc='right')
+    a.set_title(tr,loc='center')
 
-ax2.axvline(-0.35, color='k', lw=2, alpha=0.7)
-ax5.axvline(-0.35, color='k', lw=2, alpha=0.7)
-ax8.axvline(-0.35, color='k', lw=2, alpha=0.7)
-ax11.axvline(-0.35, color='k', lw=2, alpha=0.7)
+# plt.show()
 
-plt.show()
-
-# plt.savefig('the_ultimate_boxplot_alternative.pdf')
+plt.savefig('the_ultimate_boxplot.pdf')
