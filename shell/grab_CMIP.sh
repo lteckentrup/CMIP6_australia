@@ -213,5 +213,5 @@ for model in "${model_list[@]}"; do
     echo ${model}
     ncatted -a standard_name,${var_lpj},o,c,${standard_name} \
             ${var}_${scenario}/${model}/${var}_day_${model}_${suffixScenario_prel} \
-            ${var}_${scenario}/${model}/${var}_${scenario}_r1i1p1f1_2015-2100_setgrid.nc
+            ${var}_${scenario}/${model}/${var}_${scenario}_r1i1p1f1_1850-2100_setgrid.nc
 done
