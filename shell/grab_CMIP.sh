@@ -16,6 +16,8 @@ pathwayScenario=${scenario}/${realisation}/${temp_res}/${var}
 suffixScenario_prel='ssp585_r1i1p1f1_gn_18500101-21001231_prel.nc'
 suffixScenario='ssp585_r1i1p1f1_gn_20150101-21001231.nc'
 
+#-------------------------------------------------------------------------------
+
 inst='CSIRO-ARCCSS'
 model='ACCESS-CM2'
 
@@ -197,6 +199,8 @@ cdo -L -chname,${var},${var_lpj} -sellonlatbox,110,155,-45,-9 \
       ${pathwayCMIP}/CMIP/${inst}/${model}/${pathwayHistorical}/gn/*/* \
       ${pathwayCMIP}/ScenarioMIP/${inst}/${model}/${pathwayScenario}/gn/*/*_20* \
       ${var}_${scenario}/${model}/${var}_day_${model}_${suffixScenario_prel}
+
+#-------------------------------------------------------------------------------
 
 declare -a model_list=('ACCESS-CM2' 'ACCESS-ESM1-5' 'BCC-CSM2-MR' 'CanESM5'
                        'CESM2-WACCM' 'CMCC-CM2-SR5' 'EC-Earth3' 'EC-Earth3-Veg'
