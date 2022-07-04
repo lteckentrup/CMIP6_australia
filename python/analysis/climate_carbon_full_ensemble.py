@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import xarray as xr
 from matplotlib.gridspec import GridSpec
-from read_in import (model_names,
+from scipy import signal
+from read_in import (model_names_full,
                      cmap)
 
 fig = plt.figure(figsize=(9,9))
@@ -35,43 +36,53 @@ ax1_twin = ax1.twinx()
 ax3_twin = ax3.twinx()
 ax5_twin = ax5.twinx()
 
-df_temp_K = pd.read_csv('../LPJ_monthly_corrected/original_csv/temp_full.csv',
-                        index_col='Year')
-df_prec = pd.read_csv('../LPJ_monthly_corrected/original_csv/prec_full.csv',
-                      index_col='Year')
-df_CTotal = pd.read_csv('../LPJ_monthly_corrected/original_csv/CTotal_full.csv',
-                      index_col='Year')
-df_NEE = pd.read_csv('../LPJ_monthly_corrected/original_csv/NEE_full.csv',
-                      index_col='Year')
+### Read in averages from csv
+def read_csv(var):
+    df = pd.read_csv('../LPJ_monthly_corrected/original_csv/'+var+'_full.csv',
+                     index_col='Year')
 
-df_temp = df_temp_K - 273.15
-df_NBP = df_NEE * (-1)
+    if var == 'temp':
+        df = df-273.15
+    elif var == 'NEE':
+        df = df*(-1)
 
-def rolling_avg(df):
+    return(df)
+
+### Calculate 30 year moving average
+def rolling_avg(var):
+    df = read_csv('temp')
     df_anomaly = df-df[:30].mean(axis=0)
     rolling = df_anomaly.rolling(window=30,center=True).mean()
     return(rolling)
 
-dataframes = [df_temp,df_prec,df_CTotal]
+vars = ['prec', 'temp', 'CTotal']
 axes=[ax2,ax4,ax6]
 
-for df,a in zip(dataframes,axes):
-    rolling = rolling_avg(df)
+### Plot change in variables over time
+for v,a in zip(vars,axes):
+    rolling = rolling_avg(v)
     a.axhline(0, linewidth=1,  color='k', alpha=0.5)
-    for mn, c in zip(model_names, cmap):
+    for mn, c in zip(model_names_full, cmap):
         if mn == 'CRUJRA':
             lw=3.0
         else:
             lw=2.0
         a.plot(rolling[mn], color=c, lw=lw, label=mn)
 
-def boxplot_plot(df,ax,stat,position,facecolor):
+### Plot boxplots with CMIP6 spread of total values and IAV in variables
+def boxplot_plot(var,ax,stat,position,facecolor):
     if stat=='avg':
+        df = read_csv(var)
         df_boxplot = df[-30:].drop(columns=['CRUJRA']).mean(axis=0)
         scatter=df['CRUJRA'][-30:].mean()
     elif stat=='std':
-        df_boxplot = df[-30:].drop(columns=['CRUJRA']).std(axis=0)
-        scatter=df['CRUJRA'][-30:].std()
+        df = read_csv(var)
+        df_notrend = df.apply(signal.detrend)
+        df_boxplot = df_notrend[-30:].drop(columns=['CRUJRA']).std(axis=0)
+        scatter=df_notrend['CRUJRA'][-30:].std()
+        print(df_boxplot.min())
+        print(df_boxplot.max())
+        print(scatter)
 
     boxplot=ax.boxplot(df_boxplot,
                        positions=[position],
@@ -94,12 +105,12 @@ def boxplot_plot(df,ax,stat,position,facecolor):
 
     ax.scatter(position,scatter, marker='*',c='k',s=160,zorder=3,label='CRUJRA')
 
-boxplot_plot(df_temp,ax1,'avg',0.5,'#088da5')
-boxplot_plot(df_temp,ax1_twin,'std',1.5,'#ed1556')
-boxplot_plot(df_prec,ax3,'avg',0.5,'#088da5')
-boxplot_plot(df_prec,ax3_twin,'std',1.5,'#ed1556')
-boxplot_plot(df_CTotal,ax5,'avg',0.5,'#088da5')
-boxplot_plot(df_NBP,ax5_twin,'std',1.5,'#ed1556')
+boxplot_plot('prec',ax1,'avg',0.5,'#088da5')
+boxplot_plot('prec',ax1_twin,'std',1.5,'#ed1556')
+boxplot_plot('temp',ax3,'avg',0.5,'#088da5')
+boxplot_plot('temp',ax3_twin,'std',1.5,'#ed1556')
+boxplot_plot('CTotal',ax5,'avg',0.5,'#088da5')
+boxplot_plot('NEE',ax5_twin,'std',1.5,'#ed1556')
 
 for a in (ax1,ax2,ax3,ax4):
     ax1.set_xticklabels([])
@@ -120,20 +131,22 @@ for a, t in zip(axes, titles):
 for at in (ax1_twin,ax3_twin,ax5_twin):
     at.spines['top'].set_visible(False)
 
-ax1.set_ylabel('$\mathrm{T_{\mu,1989-2018}}$ [$^\circ$C]')
-ax3.set_ylabel('$\mathrm{PPT_{\mu,1989-2018}}$ [mm]')
+ax1.set_ylabel('$\mathrm{PPT_{\mu,1989-2018}}$ [mm]')
+ax3.set_ylabel('$\mathrm{T_{\mu,1989-2018}}$ [$^\circ$C]')
 ax5.set_ylabel('$\mathrm{C_{Total,\mu,1989-2018}}$ [PgC]')
 
-ax1_twin.set_ylabel('T$_{\sigma,1989-2018}$ [$^\circ$C]')
-ax3_twin.set_ylabel('PPT$_{\sigma,1989-2018}$ [mm yr$^{-1}$]')
+ax1_twin.set_ylabel('PPT$_{\sigma,1989-2018}$ [mm yr$^{-1}$]')
+ax3_twin.set_ylabel('T$_{\sigma,1989-2018}$ [$^\circ$C]')
 ax5_twin.set_ylabel('$\mathrm{NBP_{\sigma,1989-2018}}$ [PgC]')
 
-ax2.set_ylabel('$\Delta$ T [$^\circ$C]')
-ax4.set_ylabel('$\Delta$ PPT [mm]')
+ax2.set_ylabel('$\Delta$ PPT [mm]')
+ax4.set_ylabel('$\Delta$ T [$^\circ$C]')
 ax6.set_ylabel('$\Delta \mathrm{C_{Total}}$ [PgC]')
 
-ax2.legend(loc='upper center', bbox_to_anchor=(1.4, 0.7), ncol=1, frameon=False)
-ax3.legend(loc='upper center', bbox_to_anchor=(4.305, -0.37), ncol=1, frameon=False)
+ax2.legend(loc='upper center', bbox_to_anchor=(1.4, 0.7), ncol=1,
+           frameon=False)
+ax3.legend(loc='upper center', bbox_to_anchor=(4.305, -0.37), ncol=1,
+           frameon=False)
 
 fig.align_ylabels()
 
