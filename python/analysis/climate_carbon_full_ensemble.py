@@ -4,7 +4,7 @@ import pandas as pd
 import xarray as xr
 from matplotlib.gridspec import GridSpec
 from scipy import signal
-from read_in import (model_names_full,
+from read_in import (GCM_names_full,
                      cmap)
 
 fig = plt.figure(figsize=(9,9))
@@ -62,7 +62,7 @@ axes=[ax2,ax4,ax6]
 for v,a in zip(vars,axes):
     rolling = rolling_avg(v)
     a.axhline(0, linewidth=1,  color='k', alpha=0.5)
-    for mn, c in zip(model_names_full, cmap):
+    for mn, c in zip(GCM_names_full, cmap):
         if mn == 'CRUJRA':
             lw=3.0
         else:
