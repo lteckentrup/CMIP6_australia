@@ -7,6 +7,7 @@ from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 
 sns.set_theme(style='ticks')
+
 fig = plt.figure(figsize=(9,9))
 
 plt.rcParams['text.usetex'] = False
@@ -29,13 +30,9 @@ ax3 = fig.add_subplot(2,2,3)
 ax4 = fig.add_subplot(2,2,4)
 
 def readin(model,method,selection):
-    if method in ('Weighted', 'Uniform', 'Random_Forest', 'original', 'QM',
-                  'CDFt', 'MRec'):
+    if method in ('Weighted', 'Uniform', 'Random_Forest', 'original', 'SCALING',
+                  'MVA', 'QM', 'CDFt', 'MRec', 'dOTC', 'R2D2'):
         suffix='_1850-2100.nc'
-    elif method in ('SCALING', 'MVA'):
-        suffix='_1851-2100.nc'
-    else:
-        suffix='_1851-2025.nc'
 
     if method == 'CRUJRA':
         fname = ('../reanalysis/CTRL/CRUJRA/fpc_LPJ-GUESS_1901-2018.nc')
@@ -47,10 +44,11 @@ def readin(model,method,selection):
         fname = ('../LPJ_monthly_corrected/'+method+'/'+model+'/fpc_'+model+suffix)
 
     ds = xr.open_dataset(fname)
-    ds = ds.sel(Time=slice('1901', '2018'))
+    ds = ds.sel(Time=slice('1989', '2018'))
 
     Temperate = ds['TeNE']+ds['TeBS']+ds['IBS']+ds['TeBE']
     Tropical = ds['TrBE']+ds['TrIBE']+ds['TrBR']
+
     C3G = ds['C3G']
     C4G = ds['C4G']
 
@@ -59,7 +57,7 @@ def readin(model,method,selection):
            C3G.values.flatten(),
            C4G.values.flatten())
 
-methods = ['original', 'SCALING', 'MVA', 'QM', 'CDFt', 'dOTC', 'MRec']
+methods = ['original', 'SCALING', 'MVA', 'QM', 'CDFt', 'MRec', 'dOTC']
 methods_sel=['full', 'skill', 'independence', 'bounding']
 
 ### Generate dataframes for bias corrected models
@@ -110,8 +108,8 @@ def generate_dataframe_ens(method):
     df_C3G = pd.DataFrame()
     df_C4G = pd.DataFrame()
 
-    if method == 'Weighted':
-        Temperate, Tropical, C3G, C4G = readin('', 'Weighted', 'full')
+    if method in ('Weighted', 'Random_Forest'):
+        Temperate, Tropical, C3G, C4G = readin('', method, 'full')
         df_temperate['full'] = pd.Series(Temperate)
         df_tropical['full'] = pd.Series(Tropical)
         df_C3G['full'] = pd.Series(C3G)
@@ -141,6 +139,7 @@ def grouped_dataframes_ens(index, method):
     df = generate_dataframe_ens(method)[index]
     df_long = pd.melt(df, 'Model', var_name='Method', value_name='FPC')
     return(df_long.replace(0, np.nan))
+    # return(df_long)
 
 ### Calculate reference stats
 def reference_stats(veg_type, ax):
@@ -194,7 +193,7 @@ def boxplot(method):
         width=0.3
     elif method == 'Random_Forest':
         colors = ['#b9f2f0', '#b9f2f0', '#b9f2f0', '#b9f2f0']
-        width=1.1
+        width=0.3
 
     sns.set_palette(sns.color_palette(colors))
     for a, df in zip(axes, dataframes):
@@ -210,7 +209,10 @@ boxplot('Random_Forest')
 for a in (ax1,ax2,ax3,ax4):
     a.legend_.remove()
 
-legend_elements = [Patch(facecolor='#a1c9f4', edgecolor='w'),
+legend_elements = [Line2D([0], [0], color='k', lw=2, ls='-'),
+                   Line2D([0], [0], color='k', lw=2, ls=':'),
+                   Line2D([0], [0], color='k', lw=2, ls='--'),
+                   Patch(facecolor='#a1c9f4', edgecolor='w'),
                    Patch(facecolor='#ffb482', edgecolor='w'),
                    Patch(facecolor='#8de5a1', edgecolor='w'),
                    Patch(facecolor='#ff9f9b', edgecolor='w'),
@@ -219,15 +221,14 @@ legend_elements = [Patch(facecolor='#a1c9f4', edgecolor='w'),
                    Patch(facecolor='#cfcfcf', edgecolor='w'),
                    Patch(facecolor='#fffea3', edgecolor='w'),
                    Patch(facecolor='#fab0e4', edgecolor='w'),
-                   Patch(facecolor='#b9f2f0', edgecolor='w'),
-                   Line2D([0], [0], color='k', lw=2, ls='-'),
-                   Line2D([0], [0], color='k', lw=2, ls=':'),
-                   Line2D([0], [0], color='k', lw=2, ls='--')]
+                   Patch(facecolor='#b9f2f0', edgecolor='w')
+                   ]
 
-legend_labels = ['Original', 'Scaling', 'MAV', 'QM', 'CDF-t', 'dOTC', 'MRec',
-                 'Uniform', 'Weighted', 'Random Forest',
-                 'Q1$\mathrm{_{CRUJRA}}$', 'Q3$\mathrm{_{CRUJRA}}$',
-                 'Median$\mathrm{_{CRUJRA}}$']
+legend_labels = ['Q$_{\mathrm{low}}$ LG$_\mathrm{CRUJRA}$',
+                 'Q$_{\mathrm{high}}$ LG$_\mathrm{CRUJRA}$',
+                 'Median LG$\mathrm{_{CRUJRA}}$', 'Raw', 'Scaling', 'MAV',
+                 'QM', 'CDF-t', 'R2D2', 'dOTC', 'Uniform', 'Weighted',
+                 'Random Forest']
 
 ax4.legend(legend_elements, legend_labels, loc='upper center',
            bbox_to_anchor=(-0.1, -0.5), ncol=5, frameon=False)
@@ -247,9 +248,10 @@ for a in (ax1,ax2,ax3,ax4):
     a.spines['right'].set_visible(False)
     a.axvline(10.13, color='k', lw=2, alpha=0.7)
     a.set_xticks([1,3,5,7,9,11,12,13])
-    a.set_xticklabels(['EC-Earth3-Veg', 'INM-CM4-8', 'KIOST-ESM',
-                       'MPI-ESM1-2-HR', 'NorESM2-MM',
-                       'Uniform', 'Weighted', 'Random Forest'])
+    a.set_xticklabels(['LG$_\mathrm{EC-Earth3-Veg}$', 'LG$_\mathrm{INM-CM4-8}$',
+                       'LG$_\mathrm{KIOST-ESM}$', 'LG$_\mathrm{MPI-ESM1-2-HR}$',
+                       'LG$_\mathrm{NorESM2-MM}$', 'ENS$_\mathrm{Arithmetic}$',
+                       'ENS$_\mathrm{Weighted}$', 'ENS$_\mathrm{RF}$'])
 
     a.tick_params(axis='x', labelrotation=90)
     a.set_xlabel('')
