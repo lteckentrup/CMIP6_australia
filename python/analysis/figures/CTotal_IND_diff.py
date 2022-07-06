@@ -10,7 +10,7 @@ def wurst(method,model,file,var,selection):
     CRUJRA = ('../reanalysis/CTRL/CRUJRA/'+file+'_LPJ-GUESS_1901-2018.nc')
 
     if method in ('original', 'SCALING', 'MVA', 'QM', 'CDFt', 'R2D2', 'dOTC'):
-        GCM = ('../LPJ_monthly_Corrected/'+method+'/'+model+'/'+file+'_'+
+        GCM = ('../LPJ_monthly_corrected/'+method+'/'+model+'/'+file+'_'+
                model+'_1850-2100.nc')
     elif method == 'Uniform':
         GCM = ('../LPJ_ensemble_averages/Uniform/'+file+'_'+selection+
@@ -26,10 +26,10 @@ def wurst(method,model,file,var,selection):
 
     ds_GCM_mean = ds_GCM.sel(Time=slice('1989-01-01',
                                         '2018-12-31')).mean(dim='Time',
-                                                           skipna=False)
+                                                            skipna=False)
     ds_CRUJRA_mean = ds_CRUJRA.sel(Time=slice('1989-01-01',
                                               '2018-12-31')).mean(dim='Time',
-                                                                 skipna=False)
+                                                                  skipna=False)
 
     ds_GCM_diff = (ds_GCM_mean - ds_CRUJRA_mean)/ds_CRUJRA_mean
 
@@ -108,7 +108,7 @@ model_names_bounding=['EC-Earth3-Veg', 'INM-CM4-8', 'KIOST-ESM', 'MPI-ESM1-2-HR'
                       'NorESM2-MM']
 
 bc_methods=['original', 'SCALING', 'MVA', 'QM', 'CDFt', 'R2D2', 'dOTC']
-bc_methods_title=['original', 'Scaling', 'MAV', 'QM', 'CDF-t', 'R2D2', 'dOTC']
+bc_methods_title=['Raw', 'Scaling', 'MAV', 'QM', 'CDF-t', 'R2D2', 'dOTC']
 
 for pl, mn in zip(pos_list,model_names_bounding):
     for pe,bm,bmt in zip(pl,bc_methods,bc_methods_title):
@@ -121,6 +121,5 @@ figure_name = 'CTotal_IND_diff.png'
 plt.subplots_adjust(top=0.97, left=0.05, right=0.97, bottom=0.1,
                     wspace=0.08, hspace=0.2)
 
-# plt.subplot_tool()
-plt.show()
-# plt.savefig(figure_name, dpi=400)
+# plt.show()
+plt.savefig(figure_name, dpi=400)
