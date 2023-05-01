@@ -29,7 +29,7 @@ ax2 = fig.add_subplot(2,2,2)
 ax3 = fig.add_subplot(2,2,3)
 ax4 = fig.add_subplot(2,2,4)
 
-def readin(model,method,selection):
+def readin(GCM,method,selection):
     if method in ('Weighted', 'Uniform', 'Random_Forest', 'original', 'SCALING',
                   'MVA', 'QM', 'CDFt', 'MRec', 'dOTC', 'R2D2'):
         suffix='_1850-2100.nc'
@@ -41,7 +41,7 @@ def readin(model,method,selection):
     elif method in ('Uniform', 'Random_Forest'):
         fname = ('../LPJ_ensemble_averages/'+method+'/fpc_'+selection+suffix)
     elif method in ('original', 'SCALING', 'MVA', 'QM', 'CDFt', 'MRec', 'dOTC'):
-        fname = ('../LPJ_monthly_corrected/'+method+'/'+model+'/fpc_'+model+suffix)
+        fname = ('../LPJ_monthly_corrected/'+method+'/'+GCM+'/fpc_'+GCM+suffix)
 
     ds = xr.open_dataset(fname)
     ds = ds.sel(Time=slice('1989', '2018'))
@@ -60,37 +60,37 @@ def readin(model,method,selection):
 methods = ['original', 'SCALING', 'MVA', 'QM', 'CDFt', 'MRec', 'dOTC']
 methods_sel=['full', 'skill', 'independence', 'bounding']
 
-### Generate dataframes for bias corrected models
-def generate_dataframe(model):
+### Generate dataframes for bias corrected GCMs
+def generate_dataframe(GCM):
     df_temperate = pd.DataFrame()
     df_tropical = pd.DataFrame()
     df_C3G = pd.DataFrame()
     df_C4G = pd.DataFrame()
 
     for m in methods:
-        Temperate, Tropical, C3G, C4G = readin(model, m, '')
+        Temperate, Tropical, C3G, C4G = readin(GCM, m, '')
         df_temperate[m] = pd.Series(Temperate)
         df_tropical[m] = pd.Series(Tropical)
         df_C3G[m] = pd.Series(C3G)
         df_C4G[m] = pd.Series(C4G)
 
-    if model == 'EC-Earth3-Veg':
-        model_num = 2
-    elif model == 'INM-CM4-8':
-        model_num = 4
-    elif model == 'KIOST-ESM':
-        model_num = 6
-    elif model == 'MPI-ESM1-2-HR':
-        model_num = 8
-    elif model == 'NorESM2-MM':
-        model_num = 10
+    if GCM == 'EC-Earth3-Veg':
+        GCM_num = 2
+    elif GCM == 'INM-CM4-8':
+        GCM_num = 4
+    elif GCM == 'KIOST-ESM':
+        GCM_num = 6
+    elif GCM == 'MPI-ESM1-2-HR':
+        GCM_num = 8
+    elif GCM == 'NorESM2-MM':
+        GCM_num = 10
 
-    return(df_temperate.assign(Model=model_num),
-           df_tropical.assign(Model=model_num),
-           df_C3G.assign(Model=model_num),
-           df_C4G.assign(Model=model_num))
+    return(df_temperate.assign(GCM=GCM_num),
+           df_tropical.assign(GCM=GCM_num),
+           df_C3G.assign(GCM=GCM_num),
+           df_C4G.assign(GCM=GCM_num))
 
-### Generate grouped dataframes for bias corrected models
+### Generate grouped dataframes for bias corrected GCMs
 def grouped_dataframes(index):
     df = pd.concat([generate_dataframe('EC-Earth3-Veg')[index],
                     generate_dataframe('INM-CM4-8')[index],
@@ -98,7 +98,7 @@ def grouped_dataframes(index):
                     generate_dataframe('MPI-ESM1-2-HR')[index],
                     generate_dataframe('NorESM2-MM')[index]])
 
-    df_long = pd.melt(df, 'Model', var_name='Method',value_name='FPC')
+    df_long = pd.melt(df, 'GCM', var_name='Method',value_name='FPC')
     return(df_long.replace(0, np.nan))
 
 ### Generate dataframes for ensemble averages
@@ -129,15 +129,15 @@ def generate_dataframe_ens(method):
     elif method == 'Random_Forest':
         method_num = 14
 
-    return(df_temperate.assign(Model=method_num),
-           df_tropical.assign(Model=method_num),
-           df_C3G.assign(Model=method_num),
-           df_C4G.assign(Model=method_num))
+    return(df_temperate.assign(GCM=method_num),
+           df_tropical.assign(GCM=method_num),
+           df_C3G.assign(GCM=method_num),
+           df_C4G.assign(GCM=method_num))
 
 ### Generate grouped dataframes for ensemble averages
 def grouped_dataframes_ens(index, method):
     df = generate_dataframe_ens(method)[index]
-    df_long = pd.melt(df, 'Model', var_name='Method', value_name='FPC')
+    df_long = pd.melt(df, 'GCM', var_name='Method', value_name='FPC')
     return(df_long.replace(0, np.nan))
     # return(df_long)
 
@@ -149,7 +149,7 @@ def reference_stats(veg_type, ax):
 
     ax.axhline(quant_low,color='k',lw=2,ls='-.',alpha=0.7)
     ax.axhline(quant_high,color='k',lw=2,ls=':',alpha=0.7)
-    ax.axhline(median,color='k',lw=2,ls='--',alpha=0.7)
+    ax.axhline(median,color='k',lw=2,ls='-',alpha=0.7)
 
 ### Readin reanalysis
 df_CRUJRA = pd.DataFrame()
@@ -168,7 +168,7 @@ for a,vt in zip(axes,veg_types):
         reference_stats(vt, a)
 
 def boxplot(method):
-    ### Get grouped dataframes for bias corrected models
+    ### Get grouped dataframes for bias corrected GCMs
     if method == 'BC':
         dataframes = [grouped_dataframes(0),
                       grouped_dataframes(1),
@@ -197,7 +197,7 @@ def boxplot(method):
 
     sns.set_palette(sns.color_palette(colors))
     for a, df in zip(axes, dataframes):
-        a = sns.boxplot(x='Model', hue='Method', y='FPC',
+        a = sns.boxplot(x='GCM', hue='Method', y='FPC',
                         data=df, showfliers=False, whis=0, width=width,
                         ax=a, order = np.arange(1,16))
 
@@ -209,9 +209,9 @@ boxplot('Random_Forest')
 for a in (ax1,ax2,ax3,ax4):
     a.legend_.remove()
 
-legend_elements = [Line2D([0], [0], color='k', lw=2, ls='-'),
+legend_elements = [Line2D([0], [0], color='k', lw=2, ls='-.'),
+                   Line2D([0], [0], color='k', lw=2, ls='-'),
                    Line2D([0], [0], color='k', lw=2, ls=':'),
-                   Line2D([0], [0], color='k', lw=2, ls='--'),
                    Patch(facecolor='#a1c9f4', edgecolor='w'),
                    Patch(facecolor='#ffb482', edgecolor='w'),
                    Patch(facecolor='#8de5a1', edgecolor='w'),
@@ -225,8 +225,9 @@ legend_elements = [Line2D([0], [0], color='k', lw=2, ls='-'),
                    ]
 
 legend_labels = ['Q$_{\mathrm{low}}$ LG$_\mathrm{CRUJRA}$',
+                 'Median LG$\mathrm{_{CRUJRA}}$', 
                  'Q$_{\mathrm{high}}$ LG$_\mathrm{CRUJRA}$',
-                 'Median LG$\mathrm{_{CRUJRA}}$', 'Raw', 'Scaling', 'MAV',
+                 'Raw', 'Scaling', 'MAV',
                  'QM', 'CDF-t', 'R2D2', 'dOTC', 'Uniform', 'Weighted',
                  'Random Forest']
 
@@ -235,8 +236,10 @@ ax4.legend(legend_elements, legend_labels, loc='upper center',
 
 hatches = ['']
 hatches = hatches * 47
-hatches.extend(['//', '..', '\\\\', '', '', '', '', '', '', '',
-                '//', '..', '\\\\'])
+# hatches.extend(['//', '..', '\\\\', '', '', '', '', '', '', '',
+#                 '//', '..', '\\\\'])
+hatches.extend(['//', '..', '**', '', '', '', '', '', '', '',
+                '//', '..', '**'])
 
 def hatching(axis):
     for i,thisbar in enumerate(axis.patches):
@@ -274,4 +277,4 @@ for a,tl,tr in zip(axes,title_left,title_right):
 
 # plt.show()
 
-plt.savefig('the_ultimate_boxplot.pdf')
+plt.savefig('FPC_boxplot.pdf')
